@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P File Sharing</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Initial connection form */
+    #connection-form {
+      text-align: center;
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    #connection-form input {
+      padding: 10px;
+      margin: 10px;
+      width: 250px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    #connection-form button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      background: #0078d7;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #connection-form button:hover {
+      background: #005bb5;
+    }
+
+    /* After connection split screen */
+    #main-page {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+    }
+
+    .half {
+      flex: 1;
+      padding: 20px;
+      box-sizing: border-box;
+      border-right: 2px solid #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .half:last-child {
+      border-right: none;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .dropzone {
+      width: 80%;
+      height: 200px;
+      border: 2px dashed #aaa;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .dropzone.dragover {
+      background: #e6f2ff;
+      border-color: #0078d7;
+      color: #0078d7;
+    }
+  </style>
+</head>
+<body>
+  <!-- Connection Form -->
+  <div id="connection-form">
+    <h1>P2P File Sharing</h1>
+    <input type="text" id="ip1" placeholder="Enter your IP">
+    <br>
+    <input type="text" id="ip2" placeholder="Enter receiver's IP">
+    <br>
+    <button onclick="connect()">Connect</button>
+    <p id="status"></p>
+  </div>
+
+  <!-- Main Page after Connection -->
+  <div id="main-page">
+    <div class="half">
+      <h2 id="ip1-label"></h2>
+      <div class="dropzone" id="upload-ip1">Drag & Drop File Here</div>
+    </div>
+    <div class="half">
+      <h2 id="ip2-label"></h2>
+      <div class="dropzone" id="upload-ip2">Waiting for file...</div>
+    </div>
+  </div>
+
+  <script>
+    function connect() {
+      const ip1 = document.getElementById("ip1").value;
+      const ip2 = document.getElementById("ip2").value;
+
+      if (!ip1 || !ip2) {
+        alert("Please enter both IP addresses!");
+        return;
+      }
+
+      // Update UI
+      document.getElementById("connection-form").style.display = "none";
+      document.getElementById("main-page").style.display = "flex";
+
+      document.getElementById("ip1-label").innerText = "IP1: " + ip1;
+      document.getElementById("ip2-label").innerText = "IP2: " + ip2;
+
+      document.getElementById("status").innerText = "Connection set successfully!";
+      
+      // Call backend connect API (placeholder)
+      fetch("/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip1, ip2 })
+      });
+    }
+
+    // Drag & Drop logic for IP1 upload
+    const dropzone1 = document.getElementById("upload-ip1");
+
+    dropzone1.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone1.classList.add("dragover");
+    });
+
+    dropzone1.addEventListener("dragleave", () => {
+      dropzone1.classList.remove("dragover");
+    });
+
+    dropzone1.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone1.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        uploadFile(file);
+      }
+    });
+
+    function uploadFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      fetch("/upload", { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+        })
+        .catch(err => console.error(err));
+    }
+  </script>
+</body>
+</html>

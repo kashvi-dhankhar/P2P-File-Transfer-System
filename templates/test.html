@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P2P File Sharing</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Connection Form */
+#connection-form {
+  text-align: center;
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+#connection-form input {
+  padding: 10px;
+  margin: 10px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+#connection-form button {
+  padding: 10px 20px;
+  margin-top: 20px;
+  background: #0078d7;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+#connection-form button:hover { background: #005bb5; }
+
+/* Main Page */
+#main-page {
+  display: none;
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+}
+#top-bar {
+  background: #0078d7;
+  color: white;
+  padding: 15px;
+  text-align: right;
+}
+#top-bar button {
+  background: #d9534f;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+#top-bar button:hover { background: #b52b27; }
+
+#split-area { flex: 1; display: flex; }
+.half {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 2px solid #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.half:last-child { border-right: none; }
+
+h2 { margin-bottom: 20px; color: #333; }
+
+.dropzone {
+  width: 90%;
+  min-height: 200px;
+  border: 2px dashed #aaa;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  color: #777;
+  font-size: 16px;
+  padding: 10px;
+  text-align: left;
+  overflow-y: auto;
+}
+.dropzone.dragover {
+  background: #e6f2ff;
+  border-color: #0078d7;
+  color: #0078d7;
+}
+
+.staged-file {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin: 5px 0;
+  cursor: grab;
+  width: 95%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+.staged-file button {
+  background: #d9534f;
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 16px;
+  padding: 0;
+}
+
+#status {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+#status.success { color: green; }
+#status.error { color: red; }
+</style>
+</head>
+<body>
+
+<!-- Connection Form -->
+<div id="connection-form">
+  <h1>P2P File Sharing</h1>
+  <input type="text" id="ip1" placeholder="Enter your IP"><br>
+  <input type="text" id="ip2" placeholder="Enter receiver's IP"><br>
+  <button onclick="connect()">Connect</button>
+  <p id="status"></p>
+</div>
+
+<!-- Main Page -->
+<div id="main-page">
+  <div id="top-bar">
+    <button onclick="disconnectConnection()">Disconnect</button>
+  </div>
+  <div id="split-area">
+    <div class="half">
+      <h2 id="ip1-label"></h2>
+      <div class="dropzone" id="upload-ip1">Drag & Drop files here (staging area)</div>
+    </div>
+    <div class="half">
+      <h2 id="ip2-label"></h2>
+      <div class="dropzone" id="upload-ip2">Drop here to upload staged files to IP2</div>
+    </div>
+  </div>
+  <p id="status"></p>
+</div>
+
+<script>
+let stagedFilesMap = new Map(); // store File objects with unique IDs
+let fileIdCounter = 0;
+
+async function connect() {
+  const ip1 = document.getElementById("ip1").value;
+  const ip2 = document.getElementById("ip2").value;
+  const statusEl = document.getElementById("status");
+
+  if (!ip1 || !ip2) { alert("Please enter both IP addresses!"); return; }
+  statusEl.textContent = "Trying to connect..."; statusEl.className = "";
+
+  try {
+    const response = await fetch("/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ip1, ip2 })
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      document.getElementById("connection-form").style.display = "none";
+      document.getElementById("main-page").style.display = "flex";
+      document.getElementById("ip1-label").innerText = "IP1: " + ip1;
+      document.getElementById("ip2-label").innerText = "IP2: " + ip2;
+      statusEl.textContent = "Connection set successfully!"; statusEl.className = "success";
+    } else {
+      statusEl.textContent = "Connection not set. Try again."; statusEl.className = "error";
+    }
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Connection not set. Try again."; statusEl.className = "error";
+  }
+}
+
+async function disconnectConnection() {
+  const statusEl = document.getElementById("status");
+  try {
+    const response = await fetch("/disconnect", { method: "POST", headers: { "Content-Type": "application/json" } });
+    const result = await response.json();
+
+    if (result.success) {
+      statusEl.textContent = result.message; statusEl.className = "success";
+      document.getElementById("main-page").style.display = "none";
+      document.getElementById("connection-form").style.display = "block";
+      stagedFilesMap.clear();
+      document.getElementById("upload-ip1").innerHTML = "Drag & Drop files here (staging area)";
+    } else {
+      statusEl.textContent = "Failed to disconnect."; statusEl.className = "error";
+    }
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Failed to disconnect."; statusEl.className = "error";
+  }
+}
+
+const dropzone1 = document.getElementById("upload-ip1");
+const dropzone2 = document.getElementById("upload-ip2");
+
+// IP1 staging area
+dropzone1.addEventListener("dragover", e => { e.preventDefault(); dropzone1.classList.add("dragover"); });
+dropzone1.addEventListener("dragleave", () => { dropzone1.classList.remove("dragover"); });
+dropzone1.addEventListener("drop", e => {
+  e.preventDefault(); dropzone1.classList.remove("dragover");
+
+  for (const file of e.dataTransfer.files) {
+    const fileId = fileIdCounter++;
+    stagedFilesMap.set(fileId, file);
+
+    const fileDiv = document.createElement("div");
+    fileDiv.className = "staged-file";
+    fileDiv.innerHTML = `<span>${file.name}</span> <button>&times;</button>`;
+    fileDiv.draggable = true;
+
+    // Remove file on clicking cross
+    fileDiv.querySelector("button").addEventListener("click", () => {
+      stagedFilesMap.delete(fileId);
+      dropzone1.removeChild(fileDiv);
+    });
+
+    // Drag event to IP2
+    fileDiv.addEventListener("dragstart", ev => {
+      ev.dataTransfer.setData("text/plain", fileId);
+    });
+
+    dropzone1.appendChild(fileDiv);
+  }
+});
+
+// IP2 upload area
+dropzone2.addEventListener("dragover", e => { e.preventDefault(); dropzone2.classList.add("dragover"); });
+dropzone2.addEventListener("dragleave", () => { dropzone2.classList.remove("dragover"); });
+dropzone2.addEventListener("drop", e => {
+  e.preventDefault(); dropzone2.classList.remove("dragover");
+
+  const fileIdStr = e.dataTransfer.getData("text/plain");
+  const fileId = parseInt(fileIdStr);
+  const file = stagedFilesMap.get(fileId);
+
+  if (!file) { alert("File not found!"); return; }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  fetch("/upload", { method: "POST", body: formData })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      stagedFilesMap.delete(fileId);
+      // remove corresponding staged file div
+      const children = Array.from(dropzone1.children);
+      for (const child of children) {
+        if (child.classList.contains("staged-file") && child.querySelector("span").innerText === file.name) {
+          dropzone1.removeChild(child);
+          break;
+        }
+      }
+    })
+    .catch(err => console.error(err));
+});
+</script>
+</body>
+</html>
