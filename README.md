@@ -1,6 +1,7 @@
 # P2P-File-Transfer-System
 A full-stack project demonstrating peer-to-peer (P2P) file transfer between two devices over a network.  
-Built as part of Distributed Computer Networks (DCN), this project provides a simple yet robust interface to connect two devices and securely transfer files.
+Built with **Flask (Python)** for backend and a clean **HTML/CSS/JS** frontend, this project provides a simple yet robust interface to connect two peers and securely transfer files.
+
 
 ---
 
@@ -16,13 +17,17 @@ Built as part of Distributed Computer Networks (DCN), this project provides a si
 
 ## Tech Stack
 - **Frontend:** HTML, CSS, JavaScript  
-- **Backend:** Node.js / Python (depending on your implementation)  
+- **Backend:** Python (Flask)  
 - **Networking:** Socket Programming (P2P Communication)  
-- **Database (if any):** —  
 
 ---
 
-## How It Works
+## Prerequisites
+- Both peers must have a **shared folder** accessible to the application for successful file transfer.
+
+---
+
+## Working
 1. Enter **Sender IP** and **Receiver IP**.  
 2. Press **Connect** → Connection established.  
    - If connection fails → Error message shown.  
