@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import subprocess
 import os
 
 app = Flask(__name__)
 
-# Mounted IP2 folder
-UPLOAD_FOLDER = "/Volumes/kashvi123"
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route("/")
 def home():
@@ -55,7 +55,21 @@ def upload_file():
 
     if errors:
         return f"Some files failed:\n{errors}\nUploaded files:\n{saved_files}"
-    return f"All files uploaded successfully: {saved_files}"
+
+    return jsonify({"success": True, "uploaded": saved_files})
+
+@app.route("/files")
+def list_files():
+    files = os.listdir(UPLOAD_FOLDER)
+    if not files:
+        return "No files uploaded yet."
+
+    links = [f'<a href="/files/{fname}" target="_blank">{fname}</a>' for fname in files]
+    return "<h3>Uploaded Files:</h3>" + "<br>".join(links)
+
+@app.route("/files/<filename>")
+def get_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=False)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5002, debug=True)
+    app.run(host="0.0.0.0", port=5003, debug=True)
