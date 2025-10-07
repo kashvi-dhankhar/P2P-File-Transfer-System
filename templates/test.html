@@ -15,7 +15,6 @@ body {
   height: 100vh;
 }
 
-/* Connection Form */
 #connection-form {
   text-align: center;
   background: #fff;
@@ -42,7 +41,6 @@ body {
 }
 #connection-form button:hover { background: #005bb5; }
 
-/* Main Page */
 #main-page {
   display: none;
   width: 100%;
@@ -139,7 +137,6 @@ h2 { margin-bottom: 20px; color: #333; }
 </head>
 <body>
 
-<!-- Connection Form -->
 <div id="connection-form">
   <h1>P2P File Sharing</h1>
   <input type="text" id="ip1" placeholder="Enter your IP"><br>
@@ -148,7 +145,6 @@ h2 { margin-bottom: 20px; color: #333; }
   <p id="status"></p>
 </div>
 
-<!-- Main Page -->
 <div id="main-page">
   <div id="top-bar">
     <button onclick="disconnectConnection()">Disconnect</button>
@@ -167,7 +163,7 @@ h2 { margin-bottom: 20px; color: #333; }
 </div>
 
 <script>
-let stagedFilesMap = new Map(); // store File objects with unique IDs
+let stagedFilesMap = new Map();
 let fileIdCounter = 0;
 
 async function connect() {
@@ -225,7 +221,6 @@ async function disconnectConnection() {
 const dropzone1 = document.getElementById("upload-ip1");
 const dropzone2 = document.getElementById("upload-ip2");
 
-// IP1 staging area
 dropzone1.addEventListener("dragover", e => { e.preventDefault(); dropzone1.classList.add("dragover"); });
 dropzone1.addEventListener("dragleave", () => { dropzone1.classList.remove("dragover"); });
 dropzone1.addEventListener("drop", e => {
@@ -240,13 +235,11 @@ dropzone1.addEventListener("drop", e => {
     fileDiv.innerHTML = `<span>${file.name}</span> <button>&times;</button>`;
     fileDiv.draggable = true;
 
-    // Remove file on clicking cross
     fileDiv.querySelector("button").addEventListener("click", () => {
       stagedFilesMap.delete(fileId);
       dropzone1.removeChild(fileDiv);
     });
 
-    // Drag event to IP2
     fileDiv.addEventListener("dragstart", ev => {
       ev.dataTransfer.setData("text/plain", fileId);
     });
@@ -255,7 +248,6 @@ dropzone1.addEventListener("drop", e => {
   }
 });
 
-// IP2 upload area
 dropzone2.addEventListener("dragover", e => { e.preventDefault(); dropzone2.classList.add("dragover"); });
 dropzone2.addEventListener("dragleave", () => { dropzone2.classList.remove("dragover"); });
 dropzone2.addEventListener("drop", e => {
@@ -275,7 +267,6 @@ dropzone2.addEventListener("drop", e => {
     .then(msg => {
       alert(msg);
       stagedFilesMap.delete(fileId);
-      // remove corresponding staged file div
       const children = Array.from(dropzone1.children);
       for (const child of children) {
         if (child.classList.contains("staged-file") && child.querySelector("span").innerText === file.name) {
